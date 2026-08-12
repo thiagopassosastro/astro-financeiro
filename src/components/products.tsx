@@ -7,12 +7,13 @@ import { useStore } from "./store";
 import { Badge, Field } from "./ui";
 
 export function ProductsView() {
-  const { state, addProduct, updateProductCost } = useStore();
+  const { state, addProduct, removeProduct, updateProductCost } = useStore();
   const [modal, setModal] = useState(false);
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string>();
   const [imageError, setImageError] = useState("");
+  const [deleting, setDeleting] = useState<string>();
   const filtered = state.products.filter((product) => (product.name + product.sku).toLowerCase().includes(query.toLowerCase()));
 
   const closeModal = () => { setModal(false); setImageUrl(undefined); setImageError(""); };
@@ -31,10 +32,17 @@ export function ProductsView() {
     await addProduct({ id: crypto.randomUUID(), name: String(form.get("name")), sku: String(form.get("sku")), category: String(form.get("category")), origin: String(form.get("origin")) as "Importado", costCents: toCents(String(form.get("cost"))), suggestedPriceCents: toCents(String(form.get("price"))), imageUrl, active: true, updatedAt: new Date().toISOString().slice(0, 10) });
     closeModal();
   };
+  const remove = async (productId: string, productName: string) => {
+    if (!window.confirm(`Excluir o equipamento “${productName}”?\n\nA composição de insumos será removida deste equipamento. O estoque geral dos insumos não será apagado.`)) return;
+    setDeleting(productId);
+    try { await removeProduct(productId); }
+    catch (error) { window.alert(error instanceof Error ? error.message : "Não foi possível excluir o equipamento."); }
+    finally { setDeleting(undefined); }
+  };
 
   return <>
     <div className="view-actions"><div className="input-search"><Search size={17}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nome ou SKU..."/></div><button className="secondary"><SlidersHorizontal size={17}/>Filtros</button><button className="primary" onClick={() => setModal(true)}><Plus size={17}/>Novo equipamento</button></div>
-    <div className="panel table-panel"><table><thead><tr><th>Equipamento</th><th>Categoria</th><th>Origem</th><th>Custo atual</th><th>Preço sugerido</th><th>Status</th><th>Atualização</th><th/></tr></thead><tbody>{filtered.map((product) => <tr key={product.id}><td><div className="product-cell"><div className={`product-icon ${product.imageUrl ? "has-image" : ""}`}>{product.imageUrl ? <img src={product.imageUrl} alt={product.name}/> : <Boxes size={19}/>}</div><div><strong>{product.name}</strong><span>SKU {product.sku}</span></div></div></td><td>{product.category}</td><td>{product.origin}</td><td><strong>{brl(product.costCents)}</strong></td><td>{product.suggestedPriceCents ? brl(product.suggestedPriceCents) : "—"}</td><td><Badge tone="success">Ativo</Badge></td><td>{new Date(product.updatedAt + "T12:00").toLocaleDateString("pt-BR")}</td><td><button className="table-action" onClick={() => setHistory(product.id)}><Clock3 size={17}/></button></td></tr>)}</tbody></table><div className="table-footer">Mostrando {filtered.length} equipamentos <span>Custos históricos protegidos</span></div></div>
+    <div className="panel table-panel"><table><thead><tr><th>Equipamento</th><th>Categoria</th><th>Origem</th><th>Custo atual</th><th>Preço sugerido</th><th>Status</th><th>Atualização</th><th/></tr></thead><tbody>{filtered.map((product) => <tr key={product.id}><td><div className="product-cell"><div className={`product-icon ${product.imageUrl ? "has-image" : ""}`}>{product.imageUrl ? <img src={product.imageUrl} alt={product.name}/> : <Boxes size={19}/>}</div><div><strong>{product.name}</strong><span>SKU {product.sku}</span></div></div></td><td>{product.category}</td><td>{product.origin}</td><td><strong>{brl(product.costCents)}</strong></td><td>{product.suggestedPriceCents ? brl(product.suggestedPriceCents) : "—"}</td><td><Badge tone="success">Ativo</Badge></td><td>{new Date(product.updatedAt + "T12:00").toLocaleDateString("pt-BR")}</td><td><div className="product-row-actions"><button className="table-action" title="Histórico de custos" onClick={() => setHistory(product.id)}><Clock3 size={17}/></button><button className="table-action product-delete-action" title="Excluir equipamento" disabled={deleting===product.id} onClick={() => void remove(product.id,product.name)}><Trash2 size={17}/></button></div></td></tr>)}</tbody></table><div className="table-footer">Mostrando {filtered.length} equipamentos <span>Custos históricos protegidos</span></div></div>
     {modal && <div className="modal-backdrop"><form className="modal product-modal" onSubmit={submit}><div className="modal-head"><div><h3>Novo equipamento</h3><p>Cadastre o item, a imagem e seu custo inicial.</p></div><button type="button" onClick={closeModal}><X/></button></div><div className="product-form-body"><div className="product-upload"><span>Imagem do produto</span>{imageUrl ? <div className="image-preview"><img src={imageUrl} alt="Pré-visualização do equipamento"/><button type="button" onClick={() => setImageUrl(undefined)}><Trash2 size={15}/>Remover</button></div> : <label className="upload-drop"><input type="file" accept="image/png,image/jpeg,image/webp" onChange={chooseImage}/><ImageIcon/><strong>Adicionar imagem</strong><small>PNG, JPG ou WEBP · máximo 1,5 MB</small><em><Upload size={14}/>Selecionar arquivo</em></label>}{imageError && <small className="upload-error">{imageError}</small>}</div><div className="form-grid"><Field label="Nome do equipamento"><input name="name" required placeholder="Ex: Leg Press Pro"/></Field><Field label="Código / SKU"><input name="sku" required placeholder="LP-PRO"/></Field><Field label="Categoria"><select name="category"><option>Cardio</option><option>Musculação</option><option>Acessórios</option></select></Field><Field label="Origem"><select name="origin"><option>Fabricação própria</option><option>Importado</option></select></Field><Field label="Custo atual"><input name="cost" required placeholder="R$ 0,00"/></Field><Field label="Preço sugerido (opcional)"><input name="price" placeholder="R$ 0,00"/></Field></div></div><div className="modal-actions"><button type="button" className="secondary" onClick={closeModal}>Cancelar</button><button className="primary">Salvar equipamento</button></div></form></div>}
     {history && <CostDrawer productId={history} close={() => setHistory(null)} update={updateProductCost}/>} 
   </>;

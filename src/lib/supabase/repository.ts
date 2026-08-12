@@ -63,6 +63,11 @@ export async function saveProduct(product: Product) {
   const result=await supabase.from("products").insert({id:product.id,name:product.name,sku:product.sku,category_id:category!.id,origin:product.origin==="Importado"?"imported":"manufactured",current_cost:money(product.costCents),suggested_price:product.suggestedPriceCents?money(product.suggestedPriceCents):null,image_url:imageUrl});assert(result.error);
 }
 export async function saveProductCost(productId:string,costCents:number){const result=await createClient().from("products").update({current_cost:money(costCents)}).eq("id",productId);assert(result.error)}
+export async function deleteProduct(productId:string){
+  const response=await fetch(`/api/products/${productId}`,{method:"DELETE"});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.error||"Não foi possível excluir o equipamento.");
+}
 export async function saveProductInput(input:ProductInput){const supabase=createClient();const inventory=await supabase.from("inventory_items").upsert({id:input.inventoryItemId,code:input.code||null,name:input.name,unit:input.unit,unit_cost:money(input.unitCostCents),current_stock:input.currentStock,minimum_stock:input.minimumStock}).select("id").single();assert(inventory.error);const result=await supabase.from("product_inputs").upsert({id:input.id,product_id:input.productId,inventory_item_id:inventory.data!.id,code:input.code||null,name:input.name,unit:input.unit,quantity:input.quantity,unit_cost:money(input.unitCostCents),notes:input.notes||null});assert(result.error)}
 export async function deleteProductInput(id:string){const result=await createClient().from("product_inputs").update({deleted_at:new Date().toISOString()}).eq("id",id);assert(result.error)}
 export async function adjustInventoryStock(id:string,currentStock:number,minimumStock:number,notes?:string){const result=await createClient().rpc("adjust_inventory_stock",{p_inventory_item_id:id,p_new_stock:currentStock,p_minimum_stock:minimumStock,p_notes:notes||""});assert(result.error)}

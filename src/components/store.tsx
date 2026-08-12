@@ -4,11 +4,11 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { AccessRole, AppState, Customer, Expense, Product, ProductInput, Sale, Seller } from "@/domain/types";
 import { emptyState } from "@/data/empty-state";
 import { createClient } from "@/lib/supabase/client";
-import { adjustInventoryStock, cancelSale as cancelSaleInDb, deleteProductInput, loadAppState, saveCustomer, saveExpense, saveProduct, saveProductCost, saveProductInput, saveSale, saveSeller, saveUserRole, settleInstallment } from "@/lib/supabase/repository";
+import { adjustInventoryStock, cancelSale as cancelSaleInDb, deleteProduct, deleteProductInput, loadAppState, saveCustomer, saveExpense, saveProduct, saveProductCost, saveProductInput, saveSale, saveSeller, saveUserRole, settleInstallment } from "@/lib/supabase/repository";
 
 interface StoreValue {
   state: AppState; loading: boolean; syncError: string;
-  addSale:(sale:Sale)=>Promise<void>; addProduct:(product:Product)=>Promise<void>; updateProductCost:(id:string,cost:number)=>Promise<void>;
+  addSale:(sale:Sale)=>Promise<void>; addProduct:(product:Product)=>Promise<void>; removeProduct:(id:string)=>Promise<void>; updateProductCost:(id:string,cost:number)=>Promise<void>;
   addExpense:(expense:Expense)=>Promise<void>; addCustomer:(customer:Customer)=>Promise<void>; addSeller:(seller:Seller)=>Promise<void>;
   addProductInput:(input:ProductInput)=>Promise<void>; removeProductInput:(id:string)=>Promise<void>;
   updateInventoryStock:(inventoryItemId:string,currentStock:number,minimumStock:number,notes?:string)=>Promise<void>; cancelSale:(id:string)=>Promise<void>;
@@ -25,6 +25,7 @@ export function StoreProvider({children}:{children:React.ReactNode}) {
   const value:StoreValue={state,loading,syncError,refresh,
     addSale:(sale)=>run(current=>({...current,sales:[sale,...current.sales]}),()=>saveSale(sale)),
     addProduct:(product)=>run(current=>({...current,products:[product,...current.products]}),()=>saveProduct(product)),
+    removeProduct:(id)=>run(current=>({...current,products:current.products.filter(product=>product.id!==id),productInputs:current.productInputs.filter(input=>input.productId!==id),costHistory:current.costHistory.filter(item=>item.productId!==id)}),()=>deleteProduct(id)),
     addProductInput:(input)=>run(current=>({...current,productInputs:[...current.productInputs,input]}),()=>saveProductInput(input)),
     removeProductInput:(id)=>run(current=>({...current,productInputs:current.productInputs.filter(input=>input.id!==id)}),()=>deleteProductInput(id)),
     updateInventoryStock:(inventoryItemId,currentStock,minimumStock,notes)=>run(current=>({...current,productInputs:current.productInputs.map(input=>input.inventoryItemId===inventoryItemId?{...input,currentStock,minimumStock}:input)}),()=>adjustInventoryStock(inventoryItemId,currentStock,minimumStock,notes)),
