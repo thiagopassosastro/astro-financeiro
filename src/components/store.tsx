@@ -4,12 +4,12 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { AccessRole, AppState, Customer, Expense, Product, ProductInput, Sale, Seller } from "@/domain/types";
 import { emptyState } from "@/data/empty-state";
 import { createClient } from "@/lib/supabase/client";
-import { adjustInventoryStock, cancelSale as cancelSaleInDb, deleteProduct, deleteProductInput, loadAppState, saveCustomer, saveExpense, saveProduct, saveProductCost, saveProductInput, saveSale, saveSeller, saveUserRole, settleInstallment } from "@/lib/supabase/repository";
+import { adjustInventoryStock, cancelSale as cancelSaleInDb, deleteProduct, deleteProductInput, loadAppState, saveCustomer, saveExpense, saveProduct, saveProductCost, saveProductInput, saveSale, saveSeller, saveUserRole, settleInstallment, updateCustomer as updateCustomerInDb } from "@/lib/supabase/repository";
 
 interface StoreValue {
   state: AppState; loading: boolean; syncError: string;
   addSale:(sale:Sale)=>Promise<void>; addProduct:(product:Product)=>Promise<void>; removeProduct:(id:string)=>Promise<void>; updateProductCost:(id:string,cost:number)=>Promise<void>;
-  addExpense:(expense:Expense)=>Promise<void>; addCustomer:(customer:Customer)=>Promise<void>; addSeller:(seller:Seller)=>Promise<void>;
+  addExpense:(expense:Expense)=>Promise<void>; addCustomer:(customer:Customer)=>Promise<void>; updateCustomer:(customer:Customer)=>Promise<void>; addSeller:(seller:Seller)=>Promise<void>;
   addProductInput:(input:ProductInput)=>Promise<void>; removeProductInput:(id:string)=>Promise<void>;
   updateInventoryStock:(inventoryItemId:string,currentStock:number,minimumStock:number,notes?:string)=>Promise<void>; cancelSale:(id:string)=>Promise<void>;
   updateUserRole:(id:string,role:AccessRole)=>Promise<void>;
@@ -34,6 +34,7 @@ export function StoreProvider({children}:{children:React.ReactNode}) {
     updateProductCost:(id,cost)=>run(current=>({...current,products:current.products.map(product=>product.id===id?{...product,costCents:cost,updatedAt:new Date().toISOString().slice(0,10)}:product)}),()=>saveProductCost(id,cost)),
     addExpense:(expense)=>run(current=>({...current,expenses:[expense,...current.expenses]}),()=>saveExpense(expense)),
     addCustomer:(customer)=>run(current=>({...current,customers:[customer,...current.customers]}),()=>saveCustomer(customer)),
+    updateCustomer:(customer)=>run(current=>({...current,customers:current.customers.map(item=>item.id===customer.id?customer:item)}),()=>updateCustomerInDb(customer)),
     addSeller:(seller)=>run(current=>({...current,sellers:[seller,...current.sellers]}),()=>saveSeller(seller)),
     markInstallment:(kind,parentId,id)=>run(current=>kind==="sale"?{...current,sales:current.sales.map(item=>item.id===parentId?{...item,installments:item.installments.map(part=>part.id===id?{...part,status:"paid",paidAt:new Date().toISOString().slice(0,10)}:part)}:item)}:{...current,expenses:current.expenses.map(item=>item.id===parentId?{...item,installments:item.installments.map(part=>part.id===id?{...part,status:"paid",paidAt:new Date().toISOString().slice(0,10)}:part)}:item)},()=>settleInstallment(kind,id)),
     signOut:async()=>{await createClient().auth.signOut();window.location.href="/login"}, resetDemo:()=>setState(emptyState),

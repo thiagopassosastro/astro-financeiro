@@ -15,7 +15,7 @@ export interface ProductInput {
   id: string; productId: string; inventoryItemId: string; code?: string; name: string; unit: string;
   quantity: number; unitCostCents: number; currentStock: number; minimumStock: number; notes?: string; createdAt: string;
 }
-export interface Customer { id: string; name: string; company: string; document: string; phone: string; email: string; city: string; state: string; }
+export interface Customer { id: string; name: string; company: string; document: string; phone: string; email: string; address: string; city: string; state: string; }
 export interface Seller { id: string; name: string; phone: string; email: string; active: boolean; }
 export interface SaleItem {
   id: string; productId: string; productNameSnapshot: string; productSkuSnapshot: string;

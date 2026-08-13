@@ -44,9 +44,9 @@ export const seed: AppState = {
   ],
   productInputs: [], users: [],
   customers: [
-    {id:"cust-1",name:"Rafael Mendes",company:"Academia Arena Fitness",document:"12.345.678/0001-90",phone:"(11) 99988-1122",email:"financeiro@arenafitness.com",city:"São Paulo",state:"SP"},
-    {id:"cust-2",name:"Mariana Costa",company:"Studio Move+",document:"23.456.789/0001-10",phone:"(19) 99811-2211",email:"mariana@movemais.com",city:"Campinas",state:"SP"},
-    {id:"cust-3",name:"Paulo Viana",company:"Clube Forma",document:"34.567.890/0001-21",phone:"(21) 99722-3344",email:"compras@clubeforma.com",city:"Rio de Janeiro",state:"RJ"},
+    {id:"cust-1",name:"Rafael Mendes",company:"Academia Arena Fitness",document:"12.345.678/0001-90",phone:"(11) 99988-1122",email:"financeiro@arenafitness.com",address:"",city:"São Paulo",state:"SP"},
+    {id:"cust-2",name:"Mariana Costa",company:"Studio Move+",document:"23.456.789/0001-10",phone:"(19) 99811-2211",email:"mariana@movemais.com",address:"",city:"Campinas",state:"SP"},
+    {id:"cust-3",name:"Paulo Viana",company:"Clube Forma",document:"34.567.890/0001-21",phone:"(21) 99722-3344",email:"compras@clubeforma.com",address:"",city:"Rio de Janeiro",state:"RJ"},
   ],
   sellers: [
     {id:"seller-1",name:"Camila Rocha",phone:"(11) 98888-1000",email:"camila@astro.com.br",active:true},
