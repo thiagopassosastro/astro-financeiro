@@ -10,7 +10,7 @@ interface StoreValue {
   state: AppState; loading: boolean; syncError: string;
   addSale:(sale:Sale)=>Promise<void>; addProduct:(product:Product)=>Promise<void>; removeProduct:(id:string)=>Promise<void>; updateProductCost:(id:string,cost:number)=>Promise<void>;
   addExpense:(expense:Expense)=>Promise<void>; addCustomer:(customer:Customer)=>Promise<void>; updateCustomer:(customer:Customer)=>Promise<void>; addSeller:(seller:Seller)=>Promise<void>;
-  addProductInput:(input:ProductInput)=>Promise<void>; removeProductInput:(id:string)=>Promise<void>;
+  addProductInput:(input:ProductInput)=>Promise<void>; updateProductInput:(input:ProductInput)=>Promise<void>; removeProductInput:(id:string)=>Promise<void>;
   updateInventoryStock:(inventoryItemId:string,currentStock:number,minimumStock:number,notes?:string)=>Promise<void>; cancelSale:(id:string)=>Promise<void>;
   updateUserRole:(id:string,role:AccessRole)=>Promise<void>;
   markInstallment:(kind:"sale"|"expense",parentId:string,id:string)=>Promise<void>; refresh:()=>Promise<void>; signOut:()=>Promise<void>; resetDemo:()=>void;
@@ -27,6 +27,7 @@ export function StoreProvider({children}:{children:React.ReactNode}) {
     addProduct:(product)=>run(current=>({...current,products:[product,...current.products]}),()=>saveProduct(product)),
     removeProduct:(id)=>run(current=>({...current,products:current.products.filter(product=>product.id!==id),productInputs:current.productInputs.filter(input=>input.productId!==id),costHistory:current.costHistory.filter(item=>item.productId!==id)}),()=>deleteProduct(id)),
     addProductInput:(input)=>run(current=>({...current,productInputs:[...current.productInputs,input]}),()=>saveProductInput(input)),
+    updateProductInput:(input)=>run(current=>({...current,productInputs:current.productInputs.map(item=>item.inventoryItemId===input.inventoryItemId?{...item,code:input.code,name:input.name,unit:input.unit,unitCostCents:input.unitCostCents,currentStock:input.currentStock,minimumStock:input.minimumStock,...(item.id===input.id?{quantity:input.quantity,notes:input.notes}:{} )}:item)}),()=>saveProductInput(input)),
     removeProductInput:(id)=>run(current=>({...current,productInputs:current.productInputs.filter(input=>input.id!==id)}),()=>deleteProductInput(id)),
     updateInventoryStock:(inventoryItemId,currentStock,minimumStock,notes)=>run(current=>({...current,productInputs:current.productInputs.map(input=>input.inventoryItemId===inventoryItemId?{...input,currentStock,minimumStock}:input)}),()=>adjustInventoryStock(inventoryItemId,currentStock,minimumStock,notes)),
     cancelSale:(id)=>run(current=>({...current,sales:current.sales.map(sale=>sale.id===id?{...sale,status:"cancelled"}:sale)}),()=>cancelSaleInDb(id)),
