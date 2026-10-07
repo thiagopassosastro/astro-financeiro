@@ -42,7 +42,7 @@ export const seed: AppState = {
     {id:"ch-1",productId:"prod-1",costCents:1_150_000,effectiveAt:"2026-01-01"},{id:"ch-2",productId:"prod-1",costCents:1_200_000,effectiveAt:"2026-06-01"},
     {id:"ch-3",productId:"prod-2",costCents:500_000,effectiveAt:"2026-05-12"},{id:"ch-4",productId:"prod-3",costCents:800_000,effectiveAt:"2026-04-20"},
   ],
-  productInputs: [], users: [],
+  productInputs: [], inventoryMovements: [], users: [],
   customers: [
     {id:"cust-1",name:"Rafael Mendes",company:"Academia Arena Fitness",document:"12.345.678/0001-90",phone:"(11) 99988-1122",email:"financeiro@arenafitness.com",address:"",city:"São Paulo",state:"SP"},
     {id:"cust-2",name:"Mariana Costa",company:"Studio Move+",document:"23.456.789/0001-10",phone:"(19) 99811-2211",email:"mariana@movemais.com",address:"",city:"Campinas",state:"SP"},

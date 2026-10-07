@@ -15,6 +15,12 @@ export interface ProductInput {
   id: string; productId: string; inventoryItemId: string; code?: string; name: string; unit: string;
   quantity: number; unitCostCents: number; currentStock: number; minimumStock: number; notes?: string; createdAt: string;
 }
+export interface InventoryMovement {
+  id: string; inventoryItemId: string; saleId?: string; productInputId?: string;
+  type: "manual_entry" | "manual_adjustment" | "sale" | "sale_cancel";
+  quantity: number; balanceAfter: number; notes?: string; createdAt: string;
+  code?: string; name: string; unit: string;
+}
 export interface Customer { id: string; name: string; company: string; document: string; phone: string; email: string; address: string; city: string; state: string; }
 export interface Seller { id: string; name: string; phone: string; email: string; active: boolean; }
 export interface SaleItem {
@@ -36,7 +42,7 @@ export interface Expense {
   totalCents: number; installments: Installment[]; notes?: string;
 }
 export interface AppState {
-  products: Product[]; costHistory: CostHistory[]; productInputs: ProductInput[]; customers: Customer[]; sellers: Seller[];
+  products: Product[]; costHistory: CostHistory[]; productInputs: ProductInput[]; inventoryMovements: InventoryMovement[]; customers: Customer[]; sellers: Seller[];
   sales: Sale[]; expenses: Expense[]; defaultCommissionPercentage: number; openingBalanceCents: number;
   currentProfile?: UserProfile; users: UserProfile[];
 }
