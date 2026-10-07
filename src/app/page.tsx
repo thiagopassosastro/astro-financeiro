@@ -15,6 +15,7 @@ import { ProductInputsView } from "@/components/product-inputs";
 import { StockAlertsView } from "@/components/stock-alerts";
 import { AccessSettingsView } from "@/components/access-settings";
 import { SalesSpreadsheetView } from "@/components/sales-spreadsheet";
+import { GlobalSearch } from "@/components/global-search";
 
 const groups = [
   {label:"Visão geral",items:[{id:"dashboard",label:"Dashboard",icon:LayoutDashboard}]},
@@ -34,7 +35,7 @@ const titles:Record<string,{title:string;subtitle:string}>={
 };
 
 export default function Home(){
-  const [view,setView]=useState("dashboard"); const [mobile,setMobile]=useState(false); const meta=titles[view]||titles.dashboard; const {state,signOut}=useStore();
+  const [view,setView]=useState("dashboard"); const [mobile,setMobile]=useState(false); const [searchOpen,setSearchOpen]=useState(false); const meta=titles[view]||titles.dashboard; const {state,signOut}=useStore();
   const isAdmin=state.currentProfile?.role==="admin";
   const lowStockCount=[...new Map(state.productInputs.map(input=>[input.inventoryItemId,input])).values()].filter(input=>input.currentStock<=input.minimumStock).length;
   useEffect(()=>{if(state.currentProfile&&!isAdmin&&!['products','product-inputs','stock-alerts'].includes(view))setView('products')},[state.currentProfile,isAdmin,view]);
@@ -49,7 +50,7 @@ export default function Home(){
       <div className="sidebar-bottom">{isAdmin&&<button onClick={()=>navigate("access-settings")} className={view==="access-settings"?"active":""}><Settings size={18}/>Usuários e acessos</button>}<div className="user-card"><div className="avatar">{state.currentProfile?.fullName.slice(0,2).toUpperCase()||"AS"}</div><div><strong>{state.currentProfile?.fullName||"Astro"}</strong><small>{isAdmin?"Administrador":"Operador de Estoque"}</small></div><button className="logout-button" title="Sair" onClick={()=>void signOut()}><LogOut size={16}/></button></div></div>
     </aside>
     <main className="main">
-      <header className="topbar"><button className="menu-button" onClick={()=>setMobile(true)}><Menu size={22}/></button><div><h1>{view==="new-sale"?"Nova venda":meta.title}</h1><p>{view==="new-sale"?"Registre a negociação e simule o resultado em tempo real.":meta.subtitle}</p></div><div className="top-actions"><button className="search"><Search size={18}/><span>Buscar...</span><kbd>⌘ K</kbd></button><button className="period"><CalendarDays size={17}/>Agosto 2026<ChevronDown size={15}/></button><button className="icon-button stock-bell" title="Alertas de estoque" onClick={()=>navigate("stock-alerts")}><Bell size={20}/>{lowStockCount>0&&<b>{lowStockCount}</b>}</button><button className="icon-button"><CircleDollarSign size={20}/><i/></button></div></header>
+      <header className="topbar"><button className="menu-button" onClick={()=>setMobile(true)}><Menu size={22}/></button><div><h1>{view==="new-sale"?"Nova venda":meta.title}</h1><p>{view==="new-sale"?"Registre a negociação e simule o resultado em tempo real.":meta.subtitle}</p></div><div className="top-actions"><button className="search" onClick={()=>setSearchOpen(true)}><Search size={18}/><span>Buscar em todo o sistema...</span><kbd>Ctrl K</kbd></button><button className="period"><CalendarDays size={17}/>Agosto 2026<ChevronDown size={15}/></button><button className="icon-button stock-bell" title="Alertas de estoque" onClick={()=>navigate("stock-alerts")}><Bell size={20}/>{lowStockCount>0&&<b>{lowStockCount}</b>}</button><button className="icon-button"><CircleDollarSign size={20}/><i/></button></div></header>
       <div className="content">
         {view==="dashboard"&&<DashboardView onNavigate={navigate}/>} {view==="products"&&<ProductsView/>}
         {view==="product-inputs"&&<ProductInputsView/>}
@@ -62,5 +63,6 @@ export default function Home(){
         {view==="projection"&&<ProjectionView/>} {["customers","suppliers","sellers"].includes(view)&&<DirectoryView mode={view as "customers"|"suppliers"|"sellers"}/>} {view==="reports"&&<ReportsView/>}
       </div>
     </main>
+    <GlobalSearch open={searchOpen} setOpen={setSearchOpen} onNavigate={navigate} isAdmin={isAdmin}/>
   </div>
 }
