@@ -35,11 +35,12 @@ const titles:Record<string,{title:string;subtitle:string}>={
 };
 
 export default function Home(){
-  const [view,setView]=useState("dashboard"); const [mobile,setMobile]=useState(false); const [searchOpen,setSearchOpen]=useState(false); const meta=titles[view]||titles.dashboard; const {state,signOut}=useStore();
+  const [view,setView]=useState("dashboard"); const [mobile,setMobile]=useState(false); const [searchOpen,setSearchOpen]=useState(false); const [inputTarget,setInputTarget]=useState<{id:string;request:number}>(); const meta=titles[view]||titles.dashboard; const {state,signOut}=useStore();
   const isAdmin=state.currentProfile?.role==="admin";
   const lowStockCount=[...new Map(state.productInputs.map(input=>[input.inventoryItemId,input])).values()].filter(input=>input.currentStock<=input.minimumStock).length;
   useEffect(()=>{if(state.currentProfile&&!isAdmin&&!['products','product-inputs','stock-alerts'].includes(view))setView('products')},[state.currentProfile,isAdmin,view]);
   const navigate=(id:string)=>{if(!isAdmin&&!['products','product-inputs','stock-alerts'].includes(id))return;setView(id);setMobile(false)};
+  const openInput=(id:string)=>{setInputTarget({id,request:Date.now()});navigate("product-inputs")};
   const visibleGroups=isAdmin?groups:groups.map(group=>({...group,items:group.items.filter(item=>['products','product-inputs','stock-alerts'].includes(item.id))})).filter(group=>group.items.length);
   return <div className="app-shell">
     {mobile&&<button className="scrim" onClick={()=>setMobile(false)} aria-label="Fechar menu"/>}
@@ -53,7 +54,7 @@ export default function Home(){
       <header className="topbar"><button className="menu-button" onClick={()=>setMobile(true)}><Menu size={22}/></button><div><h1>{view==="new-sale"?"Nova venda":meta.title}</h1><p>{view==="new-sale"?"Registre a negociação e simule o resultado em tempo real.":meta.subtitle}</p></div><div className="top-actions"><button className="search" onClick={()=>setSearchOpen(true)}><Search size={18}/><span>Buscar em todo o sistema...</span><kbd>Ctrl K</kbd></button><button className="period"><CalendarDays size={17}/>Agosto 2026<ChevronDown size={15}/></button><button className="icon-button stock-bell" title="Alertas de estoque" onClick={()=>navigate("stock-alerts")}><Bell size={20}/>{lowStockCount>0&&<b>{lowStockCount}</b>}</button><button className="icon-button"><CircleDollarSign size={20}/><i/></button></div></header>
       <div className="content">
         {view==="dashboard"&&<DashboardView onNavigate={navigate}/>} {view==="products"&&<ProductsView/>}
-        {view==="product-inputs"&&<ProductInputsView/>}
+        {view==="product-inputs"&&<ProductInputsView target={inputTarget}/>}
         {view==="stock-alerts"&&<StockAlertsView/>}
         {view==="access-settings"&&isAdmin&&<AccessSettingsView/>}
         {view==="sales"&&<SalesView onNew={()=>setView("new-sale")}/>} {view==="new-sale"&&<NewSaleView onDone={()=>setView("sales")}/>} 
@@ -63,6 +64,6 @@ export default function Home(){
         {view==="projection"&&<ProjectionView/>} {["customers","suppliers","sellers"].includes(view)&&<DirectoryView mode={view as "customers"|"suppliers"|"sellers"}/>} {view==="reports"&&<ReportsView/>}
       </div>
     </main>
-    <GlobalSearch open={searchOpen} setOpen={setSearchOpen} onNavigate={navigate} isAdmin={isAdmin}/>
+    <GlobalSearch open={searchOpen} setOpen={setSearchOpen} onNavigate={navigate} onOpenInput={openInput} isAdmin={isAdmin}/>
   </div>
 }

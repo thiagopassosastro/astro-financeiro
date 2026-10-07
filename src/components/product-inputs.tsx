@@ -7,10 +7,11 @@ import type { ProductInput } from "@/domain/types";
 import { useStore } from "./store";
 import { Field } from "./ui";
 
-export function ProductInputsView() {
+export function ProductInputsView({target}:{target?:{id:string;request:number}}) {
   const {state,addProductInput,updateProductInput,removeProductInput,updateProductCost,updateInventoryStock}=useStore();
   const [selectedId,setSelectedId]=useState(""); const [saving,setSaving]=useState(false); const [updated,setUpdated]=useState(false); const [search,setSearch]=useState(""); const [editing,setEditing]=useState<ProductInput>(); const [tab,setTab]=useState<"inputs"|"history">("inputs"); const [addError,setAddError]=useState("");
   useEffect(()=>{if(!selectedId&&state.products[0])setSelectedId(state.products[0].id)},[state.products,selectedId]);
+  useEffect(()=>{if(!target)return;const input=state.productInputs.find(item=>item.id===target.id);if(!input)return;setSelectedId(input.productId);setTab("inputs");setSearch(input.name);setEditing(input)},[target?.request]);
   const selected=state.products.find(product=>product.id===selectedId);
   const inputs=state.productInputs.filter(input=>input.productId===selectedId&&(!search||(input.name+input.code).toLowerCase().includes(search.toLowerCase())));
   const allSelectedInputs=state.productInputs.filter(input=>input.productId===selectedId);
