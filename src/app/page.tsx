@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Activity, AlertTriangle, BarChart3, Bell, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList, FileClock, Layers3, LayoutDashboard, LogOut, Menu, Package, Plus, ReceiptText, Search, Settings, ShoppingCart, TrendingUp, Truck, UserRound, UsersRound, WalletCards, X } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, Bell, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList, FileClock, FileSpreadsheet, Layers3, LayoutDashboard, LogOut, Menu, Package, Plus, ReceiptText, Search, Settings, ShoppingCart, TrendingUp, Truck, UserRound, UsersRound, WalletCards, X } from "lucide-react";
 import { DashboardView } from "@/components/dashboard";
 import { ProductsView } from "@/components/products";
 import { SalesView } from "@/components/sales";
@@ -14,15 +14,16 @@ import { useStore } from "@/components/store";
 import { ProductInputsView } from "@/components/product-inputs";
 import { StockAlertsView } from "@/components/stock-alerts";
 import { AccessSettingsView } from "@/components/access-settings";
+import { SalesSpreadsheetView } from "@/components/sales-spreadsheet";
 
 const groups = [
   {label:"Visão geral",items:[{id:"dashboard",label:"Dashboard",icon:LayoutDashboard}]},
-  {label:"Operações",items:[{id:"sales",label:"Vendas",icon:ShoppingCart},{id:"boletos",label:"Boletos",icon:FileClock},{id:"receivables",label:"Contas a receber",icon:WalletCards},{id:"expenses",label:"Despesas",icon:ReceiptText},{id:"payables",label:"Contas a pagar",icon:ClipboardList}]},
+  {label:"Operações",items:[{id:"sales",label:"Vendas",icon:ShoppingCart},{id:"sales-spreadsheet",label:"Planilha de vendas",icon:FileSpreadsheet},{id:"boletos",label:"Boletos",icon:FileClock},{id:"receivables",label:"Contas a receber",icon:WalletCards},{id:"expenses",label:"Despesas",icon:ReceiptText},{id:"payables",label:"Contas a pagar",icon:ClipboardList}]},
   {label:"Cadastros",items:[{id:"products",label:"Equipamentos",icon:Package},{id:"product-inputs",label:"Insumos",icon:Layers3},{id:"stock-alerts",label:"Alertas de estoque",icon:AlertTriangle},{id:"customers",label:"Clientes",icon:UsersRound},{id:"suppliers",label:"Fornecedores",icon:Truck},{id:"sellers",label:"Vendedores",icon:UserRound}]},
   {label:"Análises",items:[{id:"cashflow",label:"Fluxo de caixa",icon:Activity},{id:"projection",label:"Projeção financeira",icon:TrendingUp},{id:"reports",label:"Relatórios",icon:BarChart3}]},
 ];
 const titles:Record<string,{title:string;subtitle:string}>={
-  dashboard:{title:"Visão geral",subtitle:"Acompanhe os principais indicadores da Astro."}, sales:{title:"Vendas",subtitle:"Negociações, rentabilidade e recebimentos."},
+  dashboard:{title:"Visão geral",subtitle:"Acompanhe os principais indicadores da Astro."}, sales:{title:"Vendas",subtitle:"Negociações, rentabilidade e recebimentos."}, "sales-spreadsheet":{title:"Planilha de vendas",subtitle:"Pedidos em produção e prazos de entrega."},
   receivables:{title:"Contas a receber",subtitle:"Parcelas de clientes e próximos vencimentos."}, expenses:{title:"Despesas",subtitle:"Custos e despesas operacionais."}, payables:{title:"Contas a pagar",subtitle:"Compromissos e pagamentos da empresa."},
   boletos:{title:"Central de boletos",subtitle:"Acompanhe todos os vencimentos a receber e a pagar."},
   products:{title:"Equipamentos",subtitle:"Catálogo, custos atuais e histórico."}, customers:{title:"Clientes",subtitle:"Relacionamento e posição financeira."}, suppliers:{title:"Fornecedores",subtitle:"Parceiros e histórico de compras."}, sellers:{title:"Vendedores",subtitle:"Performance comercial e comissões."},
@@ -55,6 +56,7 @@ export default function Home(){
         {view==="stock-alerts"&&<StockAlertsView/>}
         {view==="access-settings"&&isAdmin&&<AccessSettingsView/>}
         {view==="sales"&&<SalesView onNew={()=>setView("new-sale")}/>} {view==="new-sale"&&<NewSaleView onDone={()=>setView("sales")}/>} 
+        {view==="sales-spreadsheet"&&<SalesSpreadsheetView/>}
         {view==="boletos"&&<BoletosView/>}
         {["receivables","payables","expenses","cashflow"].includes(view)&&<LedgerView mode={view as "receivables"|"payables"|"expenses"|"cashflow"}/>} 
         {view==="projection"&&<ProjectionView/>} {["customers","suppliers","sellers"].includes(view)&&<DirectoryView mode={view as "customers"|"suppliers"|"sellers"}/>} {view==="reports"&&<ReportsView/>}

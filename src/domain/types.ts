@@ -35,7 +35,7 @@ export interface Sale {
   id: string; number: string; date: string; customerId: string; sellerId: string; items: SaleItem[];
   discountCents: number; commissionType: "percentage" | "fixed"; commissionPercentage: number;
   commissionFixedCents: number; shippingCents: number; feesCents: number; otherCostsCents: number;
-  notes: string; installments: Installment[]; createdAt: string; status?: "draft" | "confirmed" | "delivered" | "cancelled";
+  notes: string; deliveryDeadline?: string; deliveryLocation?: string; installments: Installment[]; createdAt: string; status?: "draft" | "confirmed" | "delivered" | "cancelled";
 }
 export interface Expense {
   id: string; date: string; supplier: string; category: string; description: string;
