@@ -70,7 +70,28 @@ export async function deleteProduct(productId:string){
   const result=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(result.error||"Não foi possível excluir o equipamento.");
 }
-export async function saveProductInput(input:ProductInput){const supabase=createClient();const existing=await supabase.from("inventory_items").select("id,current_stock").eq("id",input.inventoryItemId).maybeSingle();assert(existing.error);let inventoryId=input.inventoryItemId;if(existing.data){const metadata=await supabase.from("inventory_items").update({code:input.code||null,name:input.name,unit:input.unit,unit_cost:money(input.unitCostCents),minimum_stock:input.minimumStock}).eq("id",input.inventoryItemId);assert(metadata.error);if(Number(existing.data.current_stock)!==input.currentStock){const stock=await supabase.rpc("adjust_inventory_stock",{p_inventory_item_id:input.inventoryItemId,p_new_stock:input.currentStock,p_minimum_stock:input.minimumStock,p_notes:"Ajuste ao editar o insumo"});assert(stock.error)}}else{const inventory=await supabase.from("inventory_items").insert({id:input.inventoryItemId,code:input.code||null,name:input.name,unit:input.unit,unit_cost:money(input.unitCostCents),current_stock:input.currentStock,minimum_stock:input.minimumStock}).select("id").single();assert(inventory.error);inventoryId=inventory.data!.id;if(input.currentStock!==0){const movement=await supabase.from("inventory_movements").insert({inventory_item_id:inventoryId,movement_type:"manual_entry",quantity:input.currentStock,balance_after:input.currentStock,notes:"Estoque inicial do insumo"});assert(movement.error)}}const result=await supabase.from("product_inputs").upsert({id:input.id,product_id:input.productId,inventory_item_id:inventoryId,code:input.code||null,name:input.name,unit:input.unit,quantity:input.quantity,unit_cost:money(input.unitCostCents),notes:input.notes||null});assert(result.error)}
+export async function saveProductInput(input:ProductInput){
+  const supabase=createClient();
+  const code=input.code?.trim().toUpperCase()||null;
+  const selection="id,code,name,unit,unit_cost,current_stock,minimum_stock";
+  const byId=await supabase.from("inventory_items").select(selection).eq("id",input.inventoryItemId).is("deleted_at",null).maybeSingle();assert(byId.error);
+  const byCode=code?await supabase.from("inventory_items").select(selection).eq("code",code).is("deleted_at",null).maybeSingle():{data:null,error:null};assert(byCode.error);
+  let inventoryId=input.inventoryItemId;
+  let material={code,name:input.name,unit:input.unit,unitCostCents:input.unitCostCents,currentStock:input.currentStock,minimumStock:input.minimumStock};
+
+  if(byCode.data&&byCode.data.id!==input.inventoryItemId){
+    inventoryId=byCode.data.id;
+    material={code:byCode.data.code,name:byCode.data.name,unit:byCode.data.unit,unitCostCents:cents(byCode.data.unit_cost),currentStock:Number(byCode.data.current_stock),minimumStock:Number(byCode.data.minimum_stock)};
+  }else if(byId.data){
+    const metadata=await supabase.from("inventory_items").update({code,name:input.name,unit:input.unit,unit_cost:money(input.unitCostCents),minimum_stock:input.minimumStock}).eq("id",input.inventoryItemId);assert(metadata.error);
+    if(Number(byId.data.current_stock)!==input.currentStock){const stock=await supabase.rpc("adjust_inventory_stock",{p_inventory_item_id:input.inventoryItemId,p_new_stock:input.currentStock,p_minimum_stock:input.minimumStock,p_notes:"Ajuste ao editar o insumo"});assert(stock.error)}
+  }else{
+    const inventory=await supabase.from("inventory_items").insert({id:input.inventoryItemId,code,name:input.name,unit:input.unit,unit_cost:money(input.unitCostCents),current_stock:input.currentStock,minimum_stock:input.minimumStock}).select("id").single();assert(inventory.error);inventoryId=inventory.data!.id;
+    if(input.currentStock!==0){const movement=await supabase.from("inventory_movements").insert({inventory_item_id:inventoryId,movement_type:"manual_entry",quantity:input.currentStock,balance_after:input.currentStock,notes:"Estoque inicial do insumo"});assert(movement.error)}
+  }
+
+  const result=await supabase.from("product_inputs").upsert({id:input.id,product_id:input.productId,inventory_item_id:inventoryId,code:material.code,name:material.name,unit:material.unit,quantity:input.quantity,unit_cost:money(material.unitCostCents),notes:input.notes||null});assert(result.error);
+}
 export async function deleteProductInput(id:string){const result=await createClient().from("product_inputs").update({deleted_at:new Date().toISOString()}).eq("id",id);assert(result.error)}
 export async function adjustInventoryStock(id:string,currentStock:number,minimumStock:number,notes?:string){const result=await createClient().rpc("adjust_inventory_stock",{p_inventory_item_id:id,p_new_stock:currentStock,p_minimum_stock:minimumStock,p_notes:notes||""});assert(result.error)}
 const customerPayload=(customer:Customer)=>({name:customer.name,company_name:customer.company,document:customer.document||null,phone:customer.phone||null,email:customer.email||null,address:customer.address||null,city:customer.city||null,state:customer.state||null});
