@@ -12,4 +12,6 @@ describe("finance", () => {
   it("distribui centavos sem perder valor", () => expect(splitInstallments(10_000_001, 3, "2026-08-10", "Boleto").reduce((s,x)=>s+x.amountCents,0)).toBe(10_000_001));
   it("preserva o custo congelado no item", () => expect(calculateSale(sale).productsCostCents).toBe(2_500_000));
   it("ignora vendas canceladas nos indicadores", () => expect(dashboardMetrics([{...sale,status:"cancelled"}],[],0).netCents).toBe(0));
+  it("trata pré-venda sem preço como pendência, não como venda de zero", () => expect(dashboardMetrics([{...sale,financialStatus:"pending_pricing"}],[],0).netCents).toBe(0));
+  it("inclui frete cobrado e acréscimos no total automático", () => expect(calculateSale({...sale,freightCents:20_000,surchargeCents:30_000}).netCents).toBe(4_550_000));
 });

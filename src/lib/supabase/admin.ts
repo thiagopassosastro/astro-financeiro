@@ -6,7 +6,7 @@ export async function requireAdministrator() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   const { data: profile } = await supabase.from("profiles").select("role, active").eq("id", user.id).single();
-  if (!profile || profile.role !== "admin" || profile.active === false) return null;
+  if (!profile || profile.role !== "finance" || profile.active === false) return null;
   return { user, supabase };
 }
 

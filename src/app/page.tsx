@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import { Activity, AlertTriangle, BarChart3, Bell, CalendarDays, ChevronDown, CircleDollarSign, ClipboardList, FileClock, FileSpreadsheet, Layers3, LayoutDashboard, LogOut, Menu, Package, Plus, ReceiptText, Search, Settings, ShoppingCart, TrendingUp, Truck, UserRound, UsersRound, WalletCards, X } from "lucide-react";
 import { DashboardView } from "@/components/dashboard";
 import { ProductsView } from "@/components/products";
-import { SalesView } from "@/components/sales";
-import { NewSaleView } from "@/components/new-sale";
+import { OrdersView } from "@/components/orders";
+import { NewPreSaleView } from "@/components/pre-sale";
 import { LedgerView } from "@/components/ledger";
 import { ProjectionView } from "@/components/projection";
 import { DirectoryView } from "@/components/directory";
-import { ReportsView } from "@/components/reports";
+import { MonthlyBalanceView } from "@/components/monthly-balance";
 import { BoletosView } from "@/components/boletos";
 import { useStore } from "@/components/store";
 import { ProductInputsView } from "@/components/product-inputs";
@@ -16,6 +16,7 @@ import { StockAlertsView } from "@/components/stock-alerts";
 import { AccessSettingsView } from "@/components/access-settings";
 import { SalesSpreadsheetView } from "@/components/sales-spreadsheet";
 import { GlobalSearch } from "@/components/global-search";
+import { StockCustomersView, StockEquipmentView, StockInputsView } from "@/components/stock-operations";
 
 const groups = [
   {label:"Visão geral",items:[{id:"dashboard",label:"Dashboard",icon:LayoutDashboard}]},
@@ -24,7 +25,7 @@ const groups = [
   {label:"Análises",items:[{id:"cashflow",label:"Fluxo de caixa",icon:Activity},{id:"projection",label:"Projeção financeira",icon:TrendingUp},{id:"reports",label:"Relatórios",icon:BarChart3}]},
 ];
 const titles:Record<string,{title:string;subtitle:string}>={
-  dashboard:{title:"Visão geral",subtitle:"Acompanhe os principais indicadores da Astro."}, sales:{title:"Vendas",subtitle:"Negociações, rentabilidade e recebimentos."}, "sales-spreadsheet":{title:"Planilha de vendas",subtitle:"Pedidos em produção e prazos de entrega."},
+  dashboard:{title:"Visão geral",subtitle:"Acompanhe os principais indicadores da Astro."}, sales:{title:"Pedidos e pré-vendas",subtitle:"Fluxo operacional, precificação e recebimentos no mesmo pedido."}, "sales-spreadsheet":{title:"Planilha de vendas",subtitle:"Pedidos em produção e prazos de entrega."},
   receivables:{title:"Contas a receber",subtitle:"Parcelas de clientes e próximos vencimentos."}, expenses:{title:"Despesas",subtitle:"Custos e despesas operacionais."}, payables:{title:"Contas a pagar",subtitle:"Compromissos e pagamentos da empresa."},
   boletos:{title:"Central de boletos",subtitle:"Acompanhe todos os vencimentos a receber e a pagar."},
   products:{title:"Equipamentos",subtitle:"Catálogo, custos atuais e histórico."}, customers:{title:"Clientes",subtitle:"Relacionamento e posição financeira."}, suppliers:{title:"Fornecedores",subtitle:"Parceiros e histórico de compras."}, sellers:{title:"Vendedores",subtitle:"Performance comercial e comissões."},
@@ -36,34 +37,35 @@ const titles:Record<string,{title:string;subtitle:string}>={
 
 export default function Home(){
   const [view,setView]=useState("dashboard"); const [mobile,setMobile]=useState(false); const [searchOpen,setSearchOpen]=useState(false); const [inputTarget,setInputTarget]=useState<{id:string;request:number}>(); const meta=titles[view]||titles.dashboard; const {state,signOut}=useStore();
-  const isAdmin=state.currentProfile?.role==="admin";
+  const isFinance=state.currentProfile?.role==="finance";
   const lowStockCount=[...new Map(state.productInputs.map(input=>[input.inventoryItemId,input])).values()].filter(input=>input.currentStock<=input.minimumStock).length;
-  useEffect(()=>{if(state.currentProfile&&!isAdmin&&!['products','product-inputs','stock-alerts'].includes(view))setView('products')},[state.currentProfile,isAdmin,view]);
-  const navigate=(id:string)=>{if(!isAdmin&&!['products','product-inputs','stock-alerts'].includes(id))return;setView(id);setMobile(false)};
+  const stockViews=['sales','new-sale','products','product-inputs','stock-alerts','customers'];
+  useEffect(()=>{if(state.currentProfile&&!isFinance&&!stockViews.includes(view))setView('sales')},[state.currentProfile,isFinance,view]);
+  const navigate=(id:string)=>{if(!isFinance&&!stockViews.includes(id))return;setView(id);setMobile(false)};
   const openInput=(id:string)=>{setInputTarget({id,request:Date.now()});navigate("product-inputs")};
-  const visibleGroups=isAdmin?groups:groups.map(group=>({...group,items:group.items.filter(item=>['products','product-inputs','stock-alerts'].includes(item.id))})).filter(group=>group.items.length);
+  const visibleGroups=isFinance?groups:groups.map(group=>({...group,items:group.items.filter(item=>['sales','products','product-inputs','stock-alerts','customers'].includes(item.id))})).filter(group=>group.items.length);
   return <div className="app-shell">
     {mobile&&<button className="scrim" onClick={()=>setMobile(false)} aria-label="Fechar menu"/>}
     <aside className={`sidebar ${mobile?"open":""}`}>
       <div className="brand"><div className="brand-logo"><img src="/astro-brand.jpg" alt="Astro Equipamentos Esportivos"/></div><button className="mobile-close" onClick={()=>setMobile(false)}><X size={20}/></button></div>
-      {isAdmin&&<button className="new-sale" onClick={()=>navigate("new-sale")}><Plus size={18}/>Nova venda</button>}
+      <button className="new-sale" onClick={()=>navigate("new-sale")}><Plus size={18}/>Nova pré-venda</button>
       <nav>{visibleGroups.map(group=><div className="nav-group" key={group.label}><span className="nav-label">{group.label}</span>{group.items.map(item=><button key={item.id} onClick={()=>navigate(item.id)} className={view===item.id?"active":""}><item.icon size={18}/><span>{item.label}</span>{item.id==="receivables"&&<em>7</em>}{item.id==="stock-alerts"&&lowStockCount>0&&<em className="stock-count">{lowStockCount}</em>}</button>)}</div>)}</nav>
-      <div className="sidebar-bottom">{isAdmin&&<button onClick={()=>navigate("access-settings")} className={view==="access-settings"?"active":""}><Settings size={18}/>Usuários e acessos</button>}<div className="user-card"><div className="avatar">{state.currentProfile?.fullName.slice(0,2).toUpperCase()||"AS"}</div><div><strong>{state.currentProfile?.fullName||"Astro"}</strong><small>{isAdmin?"Administrador":"Operador de Estoque"}</small></div><button className="logout-button" title="Sair" onClick={()=>void signOut()}><LogOut size={16}/></button></div></div>
+      <div className="sidebar-bottom">{isFinance&&<button onClick={()=>navigate("access-settings")} className={view==="access-settings"?"active":""}><Settings size={18}/>Usuários e acessos</button>}<div className="user-card"><div className="avatar">{state.currentProfile?.fullName.slice(0,2).toUpperCase()||"AS"}</div><div><strong>{state.currentProfile?.fullName||"Astro"}</strong><small>{isFinance?"Financeiro":"Estoquista"}</small></div><button className="logout-button" title="Sair" onClick={()=>void signOut()}><LogOut size={16}/></button></div></div>
     </aside>
     <main className="main">
-      <header className="topbar"><button className="menu-button" onClick={()=>setMobile(true)}><Menu size={22}/></button><div><h1>{view==="new-sale"?"Nova venda":meta.title}</h1><p>{view==="new-sale"?"Registre a negociação e simule o resultado em tempo real.":meta.subtitle}</p></div><div className="top-actions"><button className="search" onClick={()=>setSearchOpen(true)}><Search size={18}/><span>Buscar em todo o sistema...</span><kbd>Ctrl K</kbd></button><button className="period"><CalendarDays size={17}/>Agosto 2026<ChevronDown size={15}/></button><button className="icon-button stock-bell" title="Alertas de estoque" onClick={()=>navigate("stock-alerts")}><Bell size={20}/>{lowStockCount>0&&<b>{lowStockCount}</b>}</button><button className="icon-button"><CircleDollarSign size={20}/><i/></button></div></header>
+      <header className="topbar"><button className="menu-button" onClick={()=>setMobile(true)}><Menu size={22}/></button><div><h1>{view==="new-sale"?"Nova pré-venda":meta.title}</h1><p>{view==="new-sale"?"Registre cliente, equipamentos e quantidades sem informar valores.":meta.subtitle}</p></div><div className="top-actions"><button className="search" onClick={()=>setSearchOpen(true)}><Search size={18}/><span>Buscar em todo o sistema...</span><kbd>Ctrl K</kbd></button><button className="period"><CalendarDays size={17}/>Período atual<ChevronDown size={15}/></button><button className="icon-button stock-bell" title="Alertas de estoque" onClick={()=>navigate("stock-alerts")}><Bell size={20}/>{lowStockCount>0&&<b>{lowStockCount}</b>}</button>{isFinance&&<button className="icon-button"><CircleDollarSign size={20}/><i/></button>}</div></header>
       <div className="content">
-        {view==="dashboard"&&<DashboardView onNavigate={navigate}/>} {view==="products"&&<ProductsView/>}
-        {view==="product-inputs"&&<ProductInputsView target={inputTarget}/>}
+        {view==="dashboard"&&<DashboardView onNavigate={navigate}/>} {view==="products"&&(isFinance?<ProductsView/>:<StockEquipmentView/>)}
+        {view==="product-inputs"&&(isFinance?<ProductInputsView target={inputTarget}/>:<StockInputsView/>)}
         {view==="stock-alerts"&&<StockAlertsView/>}
-        {view==="access-settings"&&isAdmin&&<AccessSettingsView/>}
-        {view==="sales"&&<SalesView onNew={()=>setView("new-sale")}/>} {view==="new-sale"&&<NewSaleView onDone={()=>setView("sales")}/>} 
+        {view==="access-settings"&&isFinance&&<AccessSettingsView/>}
+        {view==="sales"&&<OrdersView onNew={()=>setView("new-sale")}/>} {view==="new-sale"&&<NewPreSaleView onDone={()=>setView("sales")}/>}
         {view==="sales-spreadsheet"&&<SalesSpreadsheetView/>}
         {view==="boletos"&&<BoletosView/>}
-        {["receivables","payables","expenses","cashflow"].includes(view)&&<LedgerView mode={view as "receivables"|"payables"|"expenses"|"cashflow"}/>} 
-        {view==="projection"&&<ProjectionView/>} {["customers","suppliers","sellers"].includes(view)&&<DirectoryView mode={view as "customers"|"suppliers"|"sellers"}/>} {view==="reports"&&<ReportsView/>}
+        {["receivables","payables","expenses","cashflow"].includes(view)&&<LedgerView mode={view as "receivables"|"payables"|"expenses"|"cashflow"}/>}
+        {view==="projection"&&<ProjectionView/>} {view==="customers"&&(isFinance?<DirectoryView mode="customers"/>:<StockCustomersView/>)} {["suppliers","sellers"].includes(view)&&<DirectoryView mode={view as "suppliers"|"sellers"}/>} {view==="reports"&&<MonthlyBalanceView/>}
       </div>
     </main>
-    <GlobalSearch open={searchOpen} setOpen={setSearchOpen} onNavigate={navigate} onOpenInput={openInput} isAdmin={isAdmin}/>
+    <GlobalSearch open={searchOpen} setOpen={setSearchOpen} onNavigate={navigate} onOpenInput={openInput} isAdmin={isFinance}/>
   </div>
 }

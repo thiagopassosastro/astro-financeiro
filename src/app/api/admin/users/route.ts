@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { AccessRole } from "@/domain/types";
 import { createAdminClient, requireAdministrator } from "@/lib/supabase/admin";
 
-const roleSchema = z.enum(["admin", "stock_operator"]);
+const roleSchema = z.enum(["finance", "stock_operator"]);
 const createSchema = z.object({
   fullName: z.string().trim().min(3).max(100), email: z.string().email(),
   password: z.string().min(8).max(72), role: roleSchema,
@@ -18,7 +18,7 @@ const updateSchema = z.discriminatedUnion("action", [
 const configurationError = () => NextResponse.json({error:"A chave administrativa do Supabase ainda não foi configurada no servidor."},{status:503});
 
 export async function GET() {
-  const access=await requireAdministrator(); if(!access)return NextResponse.json({error:"Acesso restrito a Administradores."},{status:403});
+  const access=await requireAdministrator(); if(!access)return NextResponse.json({error:"Acesso restrito ao Financeiro."},{status:403});
   try {
     const admin=createAdminClient();
     const [{data:authData,error:authError},{data:profiles,error:profilesError}]=await Promise.all([
@@ -32,7 +32,7 @@ export async function GET() {
 }
 
 export async function POST(request:Request) {
-  const access=await requireAdministrator(); if(!access)return NextResponse.json({error:"Acesso restrito a Administradores."},{status:403});
+  const access=await requireAdministrator(); if(!access)return NextResponse.json({error:"Acesso restrito ao Financeiro."},{status:403});
   const parsed=createSchema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:"Preencha nome, e-mail, senha temporária e cargo corretamente."},{status:400});
   try {
     const admin=createAdminClient(); const {fullName,email,password,role}=parsed.data;
@@ -45,9 +45,9 @@ export async function POST(request:Request) {
 }
 
 export async function PATCH(request:Request) {
-  const access=await requireAdministrator(); if(!access)return NextResponse.json({error:"Acesso restrito a Administradores."},{status:403});
+  const access=await requireAdministrator(); if(!access)return NextResponse.json({error:"Acesso restrito ao Financeiro."},{status:403});
   const parsed=updateSchema.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:"Alteração inválida."},{status:400});
-  if(parsed.data.id===access.user.id&&["deactivate","role"].includes(parsed.data.action))return NextResponse.json({error:"Você não pode remover o acesso administrativo da própria conta."},{status:400});
+  if(parsed.data.id===access.user.id&&["deactivate","role"].includes(parsed.data.action))return NextResponse.json({error:"Você não pode remover o acesso financeiro da própria conta."},{status:400});
   try {
     const admin=createAdminClient(); const input=parsed.data;
     if(input.action==="role") { const result=await admin.from("profiles").update({role:input.role}).eq("id",input.id);if(result.error)throw result.error; }

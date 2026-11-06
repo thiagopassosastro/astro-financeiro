@@ -15,7 +15,7 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
   if (!user) return NextResponse.json({ error: "Faça login novamente para continuar." }, { status: 401 });
 
   const { data: profile } = await supabase.from("profiles").select("role, active").eq("id", user.id).single();
-  if (!profile?.active || !["admin", "stock_operator"].includes(profile.role)) {
+  if (!profile?.active || !["finance", "stock_operator"].includes(profile.role)) {
     return NextResponse.json({ error: "Você não tem permissão para excluir equipamentos." }, { status: 403 });
   }
 

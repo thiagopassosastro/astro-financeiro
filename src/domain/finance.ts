@@ -27,13 +27,15 @@ export function calculateSale(sale: Sale) {
   const grossCents = items.reduce((sum, item) => sum + item.grossCents, 0);
   const itemDiscountsCents = items.reduce((sum, item) => sum + (item.grossCents - item.netCents), 0);
   const discountCents = itemDiscountsCents + sale.discountCents;
-  const netCents = grossCents - discountCents;
+  const surchargeCents = sale.surchargeCents || 0;
+  const freightCents = sale.freightCents || 0;
+  const netCents = grossCents - discountCents + surchargeCents + freightCents;
   const productsCostCents = items.reduce((sum, item) => sum + item.costCents, 0);
   const commissionCents = sale.commissionType === "percentage"
     ? Math.round(netCents * sale.commissionPercentage / 100) : sale.commissionFixedCents;
   const grossProfitCents = netCents - productsCostCents;
   const profitCents = grossProfitCents - commissionCents - sale.shippingCents - sale.feesCents - sale.otherCostsCents;
-  return { grossCents, discountCents, netCents, productsCostCents, commissionCents, grossProfitCents, profitCents,
+  return { grossCents, discountCents, surchargeCents, freightCents, netCents, productsCostCents, commissionCents, grossProfitCents, profitCents,
     shippingCents: sale.shippingCents, feesCents: sale.feesCents, otherCostsCents: sale.otherCostsCents,
     margin: netCents ? (profitCents / netCents) * 100 : 0 };
 }
@@ -55,7 +57,7 @@ export const pendingTotal = (installments: Installment[]) => installments
   .filter((item) => item.status === "pending" || item.status === "overdue").reduce((sum, item) => sum + item.amountCents, 0);
 
 export function dashboardMetrics(sales: Sale[], expenses: Expense[], openingBalanceCents: number) {
-  const activeSales = sales.filter(sale => sale.status !== "cancelled");
+  const activeSales = sales.filter(sale => sale.status !== "cancelled" && sale.financialStatus !== "pending_pricing");
   const saleTotals = activeSales.map(calculateSale);
   const grossCents = saleTotals.reduce((s, x) => s + x.grossCents, 0);
   const netCents = saleTotals.reduce((s, x) => s + x.netCents, 0);

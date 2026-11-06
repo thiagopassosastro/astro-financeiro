@@ -1,6 +1,6 @@
 export type PaymentStatus = "pending" | "paid" | "overdue" | "cancelled";
 export type PaymentMethod = "PIX" | "Dinheiro" | "Transferência" | "Boleto" | "Cartão" | "Cheque" | "Outros";
-export type AccessRole = "admin" | "stock_operator";
+export type AccessRole = "finance" | "stock_operator";
 export interface UserProfile {
   id: string; fullName: string; role: AccessRole; email?: string; active: boolean;
   mustChangePassword: boolean; lastSignInAt?: string;
@@ -17,7 +17,7 @@ export interface ProductInput {
 }
 export interface InventoryMovement {
   id: string; inventoryItemId: string; saleId?: string; productInputId?: string;
-  type: "manual_entry" | "manual_adjustment" | "sale" | "sale_cancel";
+  type: "manual_entry" | "manual_adjustment" | "sale" | "sale_adjustment" | "sale_cancel";
   quantity: number; balanceAfter: number; notes?: string; createdAt: string;
   code?: string; name: string; unit: string;
 }
@@ -35,7 +35,11 @@ export interface Sale {
   id: string; number: string; date: string; customerId: string; sellerId: string; items: SaleItem[];
   discountCents: number; commissionType: "percentage" | "fixed"; commissionPercentage: number;
   commissionFixedCents: number; shippingCents: number; feesCents: number; otherCostsCents: number;
-  notes: string; deliveryDeadline?: string; deliveryLocation?: string; installments: Installment[]; createdAt: string; status?: "draft" | "confirmed" | "delivered" | "cancelled";
+  surchargeCents?: number; freightCents?: number;
+  notes: string; deliveryDeadline?: string; deliveryLocation?: string; installments: Installment[]; createdAt: string;
+  status?: "draft" | "confirmed" | "delivered" | "cancelled";
+  financialStatus?: "pending_pricing" | "priced"; confirmedAt?: string; pricedAt?: string; cancelledAt?: string;
+  createdBy?: string; confirmedBy?: string; pricedBy?: string; cancelledBy?: string;
 }
 export interface Expense {
   id: string; date: string; supplier: string; category: string; description: string;
