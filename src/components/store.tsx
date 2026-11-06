@@ -9,7 +9,7 @@ import { adjustInventoryStock, cancelSale as cancelSaleInDb, confirmPreSale as c
 interface StoreValue {
   state: AppState; loading: boolean; syncError: string;
   addSale:(sale:Sale)=>Promise<void>; addProduct:(product:Product)=>Promise<void>; removeProduct:(id:string)=>Promise<void>; updateProductCost:(id:string,cost:number)=>Promise<void>;
-  createOperationalOrder:(order:OperationalOrderInput,confirm:boolean)=>Promise<void>; confirmOperationalOrder:(id:string)=>Promise<void>; updateOperationalOrder:(id:string,order:OperationalOrderInput)=>Promise<void>; priceOperationalOrder:(sale:Sale)=>Promise<void>;
+  createOperationalOrder:(order:OperationalOrderInput,confirm:boolean)=>Promise<void>; confirmOperationalOrder:(id:string)=>Promise<void>; updateOperationalOrder:(id:string,order:OperationalOrderInput)=>Promise<void>; priceOperationalOrder:(sale:Sale,replan:boolean)=>Promise<void>;
   addExpense:(expense:Expense)=>Promise<void>; addCustomer:(customer:Customer)=>Promise<void>; updateCustomer:(customer:Customer)=>Promise<void>; addSeller:(seller:Seller)=>Promise<void>;
   addProductInput:(input:ProductInput)=>Promise<void>; updateProductInput:(input:ProductInput)=>Promise<void>; removeProductInput:(id:string)=>Promise<void>;
   updateInventoryStock:(inventoryItemId:string,currentStock:number,minimumStock:number,notes?:string)=>Promise<void>; cancelSale:(id:string)=>Promise<void>; deliverSale:(id:string)=>Promise<void>;
@@ -29,7 +29,7 @@ export function StoreProvider({children}:{children:React.ReactNode}) {
     createOperationalOrder:(order,confirm)=>run(current=>current,async()=>{await createPreSale(order,confirm)}),
     confirmOperationalOrder:(id)=>run(current=>current,()=>confirmPreSaleInDb(id)),
     updateOperationalOrder:(id,order)=>run(current=>current,()=>updatePreSaleInDb(id,order)),
-    priceOperationalOrder:(sale)=>run(current=>current,()=>pricePreSaleInDb(sale)),
+    priceOperationalOrder:(sale,replan)=>run(current=>current,()=>pricePreSaleInDb(sale,replan)),
     addProduct:(product)=>run(current=>({...current,products:[product,...current.products]}),()=>saveProduct(product)),
     removeProduct:(id)=>run(current=>({...current,products:current.products.filter(product=>product.id!==id),productInputs:current.productInputs.filter(input=>input.productId!==id),costHistory:current.costHistory.filter(item=>item.productId!==id)}),()=>deleteProduct(id)),
     addProductInput:(input)=>run(current=>({...current,productInputs:[...current.productInputs,input]}),()=>saveProductInput(input)),

@@ -10,6 +10,7 @@ const sale: Sale = { id:"1", number:"1", date:"2026-08-01", customerId:"c", sell
 describe("finance", () => {
   it("calcula lucro sem ponto flutuante monetário", () => expect(calculateSale(sale).profitCents).toBe(1_350_000));
   it("distribui centavos sem perder valor", () => expect(splitInstallments(10_000_001, 3, "2026-08-10", "Boleto").reduce((s,x)=>s+x.amountCents,0)).toBe(10_000_001));
+  it("mantém vencimentos mensais no fim de meses curtos", () => expect(splitInstallments(300,3,"2026-01-31","Boleto").map(x=>x.dueDate)).toEqual(["2026-01-31","2026-02-28","2026-03-31"]));
   it("preserva o custo congelado no item", () => expect(calculateSale(sale).productsCostCents).toBe(2_500_000));
   it("ignora vendas canceladas nos indicadores", () => expect(dashboardMetrics([{...sale,status:"cancelled"}],[],0).netCents).toBe(0));
   it("trata pré-venda sem preço como pendência, não como venda de zero", () => expect(dashboardMetrics([{...sale,financialStatus:"pending_pricing"}],[],0).netCents).toBe(0));

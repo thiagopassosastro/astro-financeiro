@@ -43,9 +43,10 @@ export function calculateSale(sale: Sale) {
 export function splitInstallments(totalCents: number, count: number, firstDueDate: string, method: Installment["method"]): Installment[] {
   const base = Math.floor(totalCents / count);
   const remainder = totalCents - base * count;
-  const first = new Date(`${firstDueDate}T12:00:00`);
+  const [year, month, day] = firstDueDate.split("-").map(Number);
   return Array.from({ length: count }, (_, index) => {
-    const due = new Date(first); due.setMonth(first.getMonth() + index);
+    const lastDay = new Date(Date.UTC(year, month + index, 0)).getUTCDate();
+    const due = new Date(Date.UTC(year, month - 1 + index, Math.min(day, lastDay)));
     return { id: crypto.randomUUID(), number: index + 1, total: count, amountCents: base + (index < remainder ? 1 : 0),
       dueDate: due.toISOString().slice(0, 10), method, status: "pending" };
   });
