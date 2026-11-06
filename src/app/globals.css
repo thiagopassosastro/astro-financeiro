@@ -48,3 +48,5 @@
 .pricing-modal>label{display:flex;align-items:center;gap:8px;font-weight:600}
 .pricing-modal>p{color:#58657a;line-height:1.5}
 .sale-row-actions .deliver-action{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.inventory-entry-notice{margin:0 0 14px;padding:12px 15px;border:1px solid #bce9d4;border-radius:8px;background:#edf9f3;color:#146a45;line-height:1.5}
+.inventory-entry-error{display:block;color:#b52e3d;margin-top:5px;max-width:230px}

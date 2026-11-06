@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { AccessRole, AppState, Customer, Expense, Product, ProductInput, Sale, Seller } from "@/domain/types";
 import { emptyState } from "@/data/empty-state";
 import { createClient } from "@/lib/supabase/client";
-import { adjustInventoryStock, cancelSale as cancelSaleInDb, confirmPreSale as confirmPreSaleInDb, createPreSale, deleteProduct, deleteProductInput, deliverSale as deliverSaleInDb, loadAppState, pricePreSale as pricePreSaleInDb, saveCustomer, saveExpense, saveProduct, saveProductCost, saveProductInput, saveSale, saveSeller, saveUserRole, settleInstallment, updateCustomer as updateCustomerInDb, updatePreSale as updatePreSaleInDb, updateSaleDeliveryInfo as updateSaleDeliveryInfoInDb, type OperationalOrderInput } from "@/lib/supabase/repository";
+import { adjustInventoryStock, cancelSale as cancelSaleInDb, confirmPreSale as confirmPreSaleInDb, createPreSale, deleteProduct, deleteProductInput, deliverSale as deliverSaleInDb, loadAppState, pricePreSale as pricePreSaleInDb, restockInventory, saveCustomer, saveExpense, saveProduct, saveProductCost, saveProductInput, saveSale, saveSeller, saveUserRole, settleInstallment, updateCustomer as updateCustomerInDb, updatePreSale as updatePreSaleInDb, updateSaleDeliveryInfo as updateSaleDeliveryInfoInDb, type OperationalOrderInput } from "@/lib/supabase/repository";
 
 interface StoreValue {
   state: AppState; loading: boolean; syncError: string;
@@ -13,6 +13,7 @@ interface StoreValue {
   addExpense:(expense:Expense)=>Promise<void>; addCustomer:(customer:Customer)=>Promise<void>; updateCustomer:(customer:Customer)=>Promise<void>; addSeller:(seller:Seller)=>Promise<void>;
   addProductInput:(input:ProductInput)=>Promise<void>; updateProductInput:(input:ProductInput)=>Promise<void>; removeProductInput:(id:string)=>Promise<void>;
   updateInventoryStock:(inventoryItemId:string,currentStock:number,minimumStock:number,notes?:string)=>Promise<void>; cancelSale:(id:string)=>Promise<void>; deliverSale:(id:string)=>Promise<void>;
+  addInventoryEntry:(inventoryItemId:string,quantity:number,requestKey:string)=>Promise<{currentStock:number;minimumStock:number}>;
   updateSaleDeliveryInfo:(id:string,deliveryDeadline:string,deliveryLocation:string)=>Promise<void>;
   updateUserRole:(id:string,role:AccessRole)=>Promise<void>;
   markInstallment:(kind:"sale"|"expense",parentId:string,id:string)=>Promise<void>; refresh:()=>Promise<void>; signOut:()=>Promise<void>; resetDemo:()=>void;
@@ -36,6 +37,7 @@ export function StoreProvider({children}:{children:React.ReactNode}) {
     updateProductInput:(input)=>run(current=>({...current,productInputs:current.productInputs.map(item=>item.inventoryItemId===input.inventoryItemId?{...item,code:input.code,name:input.name,unit:input.unit,unitCostCents:input.unitCostCents,currentStock:input.currentStock,minimumStock:input.minimumStock,...(item.id===input.id?{quantity:input.quantity,notes:input.notes}:{} )}:item)}),()=>saveProductInput(input)),
     removeProductInput:(id)=>run(current=>({...current,productInputs:current.productInputs.filter(input=>input.id!==id)}),()=>deleteProductInput(id)),
     updateInventoryStock:(inventoryItemId,currentStock,minimumStock,notes)=>run(current=>({...current,productInputs:current.productInputs.map(input=>input.inventoryItemId===inventoryItemId?{...input,currentStock,minimumStock}:input)}),()=>adjustInventoryStock(inventoryItemId,currentStock,minimumStock,notes)),
+    addInventoryEntry:async(inventoryItemId,quantity,requestKey)=>{setSyncError("");const balance=await restockInventory(inventoryItemId,quantity,requestKey);setState(current=>({...current,productInputs:current.productInputs.map(input=>input.inventoryItemId===inventoryItemId?{...input,...balance}:input)}));await refresh();return balance},
     cancelSale:(id)=>run(current=>({...current,sales:current.sales.map(sale=>sale.id===id?{...sale,status:"cancelled"}:sale)}),()=>cancelSaleInDb(id)),
     deliverSale:(id)=>run(current=>({...current,sales:current.sales.map(sale=>sale.id===id?{...sale,status:"delivered"}:sale)}),()=>deliverSaleInDb(id)),
     updateSaleDeliveryInfo:(id,deliveryDeadline,deliveryLocation)=>run(current=>({...current,sales:current.sales.map(sale=>sale.id===id?{...sale,deliveryDeadline:deliveryDeadline||undefined,deliveryLocation:deliveryLocation.trim()||undefined}:sale)}),()=>updateSaleDeliveryInfoInDb(id,deliveryDeadline,deliveryLocation)),

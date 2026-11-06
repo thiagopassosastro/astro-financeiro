@@ -61,6 +61,11 @@ export async function saveProductInput(input:ProductInput){
 }
 export async function deleteProductInput(id:string){const result=await createClient().from("product_inputs").update({deleted_at:new Date().toISOString()}).eq("id",id);assert(result.error)}
 export async function adjustInventoryStock(id:string,currentStock:number,minimumStock:number,notes?:string){const result=await createClient().rpc("adjust_inventory_stock",{p_inventory_item_id:id,p_new_stock:currentStock,p_minimum_stock:minimumStock,p_notes:notes||""});assert(result.error)}
+export async function restockInventory(id:string,quantity:number,requestKey:string):Promise<{currentStock:number;minimumStock:number}>{
+  const result=await createClient().rpc("restock_inventory",{p_inventory_item_id:id,p_quantity:quantity,p_request_key:requestKey});assert(result.error);
+  if(!result.data||result.data.current_stock==null||result.data.minimum_stock==null)throw new Error("Não foi possível confirmar o saldo atualizado.");
+  return {currentStock:Number(result.data.current_stock),minimumStock:Number(result.data.minimum_stock)};
+}
 const customerPayload=(customer:Customer)=>({name:customer.name,company_name:customer.company,document:customer.document||null,phone:customer.phone||null,email:customer.email||null,address:customer.address||null,city:customer.city||null,state:customer.state||null});
 export async function saveCustomer(customer:Customer){const result=await createClient().from("customers").insert({id:customer.id,...customerPayload(customer)});assert(result.error)}
 export async function updateCustomer(customer:Customer){const result=await createClient().from("customers").update(customerPayload(customer)).eq("id",customer.id);assert(result.error)}
