@@ -7,7 +7,7 @@ export interface UserProfile {
 }
 
 export interface Product {
-  id: string; name: string; sku: string; category: string; origin: "Fabricação própria" | "Importado";
+  id: string; name: string; sku: string; category: string; origin: "Fabricação própria" | "Importado" | "Revenda";
   costCents: number; suggestedPriceCents?: number; imageUrl?: string; active: boolean; description?: string; updatedAt: string;
 }
 export interface CostHistory { id: string; productId: string; costCents: number; effectiveAt: string; }
